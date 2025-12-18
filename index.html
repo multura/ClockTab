@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClockTab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* Подключение шрифта SF Pro */
+        @font-face {
+            font-family: 'SF Pro';
+            src: url('assets/SF-pro.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        @font-face {
+            font-family: 'SF Pro';
+            src: url('assets/SF-pro.ttf') format('truetype');
+            font-weight: normal;
+            font-stretch: expanded;
+            font-style: normal;
+        }
+        
+        body {
+            font-family: 'SF Pro', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+            background: #000;
+        }
+        
+        /* Контейнер для фоновых изображений */
+        .slideshow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        
+        /* Изображения для фона из папки assets */
+        .slide:nth-child(1) {
+            background-image: url('assets/1.jpg');
+        }
+        
+        .slide:nth-child(2) {
+            background-image: url('assets/2.jpg');
+        }
+        
+        .slide:nth-child(3) {
+            background-image: url('assets/3.jpg');
+        }
+        
+        .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        /* Затемнение фона для лучшей читаемости */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+        
+        /* Контейнер для часов */
+        .clock-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 2;
+            width: 95%;
+            max-width: 1600px;
+        }
+        
+        .clock {
+            color: white;
+            text-shadow: 
+                0 0 20px rgba(0, 0, 0, 0.9),
+                0 0 40px rgba(0, 0, 0, 0.7),
+                0 0 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .time {
+            font-size: 16vw;
+            font-weight: normal;
+            font-stretch: expanded; /* Expanded Regular для часов */
+            letter-spacing: 4px;
+            line-height: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .time span {
+            display: inline-block;
+            min-width: 0.6em;
+            text-align: center;
+        }
+        
+        .date {
+            font-size: 3.5vw;
+            font-weight: normal;
+            font-stretch: normal; /* Regular для даты */
+            opacity: 0.85;
+            letter-spacing: 1px;
+            margin-bottom: 40px;
+        }
+        
+        /* Контейнер для описаний слайдов */
+        .slide-description-container {
+            position: relative;
+            height: 60px;
+            margin-top: 30px;
+            overflow: hidden;
+        }
+        
+        .slide-description {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 2.5vw;
+            font-weight: normal;
+            font-stretch: normal;
+            color: white;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            text-shadow: 
+                0 0 10px rgba(0, 0, 0, 0.7),
+                0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .slide-description.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .time {
+                font-size: 22vw;
+                letter-spacing: 2px;
+            }
+            
+            .date {
+                font-size: 6vw;
+                margin-bottom: 30px;
+            }
+            
+            .slide-description {
+                font-size: 4.5vw;
+            }
+            
+            .slide-description-container {
+                height: 50px;
+                margin-top: 20px;
+            }
+            
+            .clock-container {
+                width: 98%;
+            }
+        }
+        
+        /* Индикатор загрузки */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            z-index: 3;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px 40px;
+            border-radius: 10px;
+        }
+        
+        /* Очень маленькие экраны */
+        @media (max-width: 480px) {
+            .time {
+                font-size: 24vw;
+                letter-spacing: 1px;
+            }
+            
+            .date {
+                font-size: 7vw;
+                margin-bottom: 25px;
+            }
+            
+            .slide-description {
+                font-size: 5.5vw;
+            }
+            
+            .slide-description-container {
+                height: 45px;
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slideshow" id="slideshow">
+        <div class="slide"></div>
+        <div class="slide"></div>
+        <div class="slide"></div>
+    </div>
+    
+    <div class="overlay"></div>
+    
+    <div class="clock-container">
+        <div class="clock" id="clock">
+            <div class="time" id="time">
+                <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
+            </div>
+            <div class="date" id="date">Понедельник, 1 января 2001</div>
+            
+            <!-- Контейнер для описаний слайдов -->
+            <div class="slide-description-container">
+                <div class="slide-description active" id="description1">Пример 1</div>
+                <div class="slide-description" id="description2">Пример 2</div>
+                <div class="slide-description" id="description3">Пример 3</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading" id="loading">Загрузка...</div>
+
+    <script>
+        
+        // Функция для добавления ведущего нуля
+        function addLeadingZero(num) {
+            return (num < 10 ? '0' : '') + num;
+        }
+        
+        // Функция обновления времени
+        function updateTime() {
+            var now = new Date();
+            
+            var hours = addLeadingZero(now.getHours());
+            var minutes = addLeadingZero(now.getMinutes());
+            var seconds = addLeadingZero(now.getSeconds());
+            
+            document.getElementById('hours').innerHTML = hours;
+            document.getElementById('minutes').innerHTML = minutes;
+            document.getElementById('seconds').innerHTML = seconds;
+            
+            var days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+            var months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            
+            var dayName = days[now.getDay()];
+            var day = now.getDate();
+            var monthName = months[now.getMonth()];
+            var year = now.getFullYear();
+            
+            document.getElementById('date').innerHTML = dayName + ', ' + day + ' ' + monthName + ' ' + year;
+        }
+        
+        // Основная функция слайдшоу
+        function startSlideshow() {
+            var slides = document.querySelectorAll('.slide');
+            var descriptions = document.querySelectorAll('.slide-description');
+            var currentSlide = 0;
+            var totalSlides = slides.length;
+            
+            // Предзагрузка изображений
+            var imagesLoaded = 0;
+            var imageErrors = 0;
+            
+            function imageLoaded() {
+                imagesLoaded++;
+                if (imagesLoaded + imageErrors === totalSlides) {
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // Показываем первый слайд и описание
+                    if (totalSlides > 0) {
+                        slides[0].classList.add('active');
+                        descriptions[0].classList.add('active');
+                    }
+                }
+            }
+            
+            function imageError() {
+                imageErrors++;
+                console.warn('Не удалось загрузить изображение ' + (imageErrors));
+                if (imagesLoaded + imageErrors === totalSlides) {
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // Показываем первый доступный слайд и описание
+                    if (totalSlides > 0) {
+                        slides[0].classList.add('active');
+                        descriptions[0].classList.add('active');
+                    }
+                }
+            }
+            
+            // Загружаем все изображения
+            for (var i = 0; i < totalSlides; i++) {
+                var img = new Image();
+                img.onload = imageLoaded;
+                img.onerror = imageError;
+                
+                // Получаем URL из background-image
+                var bg = window.getComputedStyle(slides[i]).backgroundImage;
+                if (bg && bg !== 'none') {
+                    var url = bg.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
+                    img.src = url;
+                } else {
+                    imageError();
+                }
+            }
+            
+            // Функция смены слайдов и описаний
+            function nextSlide() {
+                if (totalSlides <= 1) return; // Если всего 1 слайд, не меняем
+                
+                var prevSlide = currentSlide;
+                
+                // Убираем активный класс у предыдущего слайда и описания
+                slides[prevSlide].classList.remove('active');
+                descriptions[prevSlide].classList.remove('active');
+                
+                // Переходим к следующему слайду
+                currentSlide = (currentSlide + 1) % totalSlides;
+                
+                // Показываем новый слайд и описание
+                slides[currentSlide].classList.add('active');
+                descriptions[currentSlide].classList.add('active');
+            }
+            
+            // Меняем слайды каждые 8 секунд
+            setInterval(nextSlide, 8000);
+            
+            // Fallback на случай проблем с загрузкой
+            setTimeout(function() {
+                if (imagesLoaded + imageErrors < totalSlides) {
+                    document.getElementById('loading').style.display = 'none';
+                    if (totalSlides > 0) {
+                        slides[0].classList.add('active');
+                        descriptions[0].classList.add('active');
+                    }
+                }
+            }, 5000);
+        }
+        
+        // Инициализация
+        function init() {
+            // Запускаем часы
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Запускаем слайдшоу
+            startSlideshow();
+            
+            // Проверяем, загрузился ли шрифт
+            setTimeout(function() {
+                var testElem = document.createElement('span');
+                testElem.style.fontFamily = 'SF Pro';
+                testElem.style.fontSize = '40px';
+                testElem.style.position = 'absolute';
+                testElem.style.left = '-9999px';
+                testElem.innerHTML = 'SF Pro test';
+                document.body.appendChild(testElem);
+                
+                setTimeout(function() {
+                    document.body.removeChild(testElem);
+                }, 100);
+            }, 1000);
+        }
+        
+        // Запуск
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        
+        // Альтернативный способ загрузки шрифта
+        var font = new FontFace('SF Pro', 'url(assets/SF-pro.ttf)');
+        font.load().then(function(loadedFont) {
+            document.fonts.add(loadedFont);
+        }).catch(function(error) {
+            console.error('Ошибка загрузки шрифта:', error);
+        });
+    </script>
+</body>
+</html>
